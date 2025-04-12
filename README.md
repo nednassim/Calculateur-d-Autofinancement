@@ -51,8 +51,9 @@ Outil professionnel pour l'analyse financière des entreprises permettant de cal
 ### Étapes d'installation
 1. Télécharger le projet :
 
-   
+
    `git clone https://github.com/votreutilisateur/calculateur-autofinancement.git`
+
    `cd calculateur-autofinancement`
 
 2. Installer les dépendances :
