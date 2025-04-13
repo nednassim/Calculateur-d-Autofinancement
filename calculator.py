@@ -60,6 +60,8 @@ class AutofinancementCalculator(QMainWindow):
         self.input_table.setColumnCount(2)
         self.input_table.setHorizontalHeaderLabels(["Élément", "Montant (€)"])
         self.input_table.setRowCount(10)
+        self.input_table.setMinimumHeight(250)  # Hauteur minimale en pixels
+        #self.input_table.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         
         # Set up default rows with tooltips
         elements = [
@@ -134,7 +136,7 @@ class AutofinancementCalculator(QMainWindow):
         results_layout.addLayout(key_results)
         
         # Chart visualization
-        self.figure = Figure(figsize=(5, 4), dpi=100)
+        self.figure = Figure(figsize=(4, 5), dpi=100)
         self.canvas = FigureCanvas(self.figure)
         
         chart_box = QFrame()
@@ -449,31 +451,67 @@ class AutofinancementCalculator(QMainWindow):
         return "\n\n".join(interpretations)
     
     def update_chart(self, caf, autofinancement, taux):
-        """Update the chart visualization"""
         self.figure.clear()
         ax = self.figure.add_subplot(111)
         
-        # Bar chart for CAF and Autofinancement
+        # Configuration de l'espacement
+        self.figure.subplots_adjust(left=0.15, right=0.95, top=0.9, bottom=0.2)
+        
+        # Données pour le graphique
+        labels = ['CAF', 'Autofinancement']
+        values = [caf, autofinancement]
+        colors = ['#4CAF50', '#2196F3']
+        
+        # Création des barres
+        bars = ax.bar(labels, values, color=colors)
+        
+        # Formatage des valeurs
+        ax.yaxis.set_major_formatter('€{x:,.0f}')
+        
+        # Ajout des valeurs sur les barres
+        for bar in bars:
+            height = bar.get_height()
+            ax.text(bar.get_x() + bar.get_width()/2., height,
+            f'€{height:,.0f}',
+            ha='center', va='bottom',
+            fontsize=10)
+        
+        # Configuration des axes
+        ax.set_ylim(0, max(values)*1.2)
+        ax.spines['top'].set_visible(False)
+        ax.spines['right'].set_visible(False)
+        
+        # Titre et informations
+        #ax.set_title('Analyse d\'Autofinancement', pad=20)
+        #ax.text(0.5, 1.1, f'Taux: {taux:.2f}%', transform=ax.transAxes, ha='left', bbox=dict(facecolor='white', edgecolor='lightgray', boxstyle='round'))
+        
+        self.canvas.draw()
+        """Update the chart visualization"""
+        self.figure.clear()
+        ax = self.figure.add_subplot(111)
+            
+            # Bar chart for CAF and Autofinancement
         labels = ['CAF', 'Autofinancement']
         values = [caf, autofinancement]
         bars = ax.bar(labels, values, color=['#2196F3', '#4CAF50'])
-        
+            
         # Add value labels
         for bar in bars:
             height = bar.get_height()
             ax.text(bar.get_x() + bar.get_width()/2., height,
                     f'{height:,.2f}€',
                     ha='center', va='bottom')
-        
-        # Add taux as text
-        ax.text(0.5, 0.95, f'Taux d\'autofinancement: {taux:.2f}%',
-                transform=ax.transAxes, ha='center', va='top',
-                bbox=dict(facecolor='white', alpha=0.8))
-        
-        ax.set_ylabel('Montant (€)')
-        ax.set_title('Analyse d\'Autofinancement')
-        self.canvas.draw()
-    
+            
+            # Add taux as text
+            #ax.text(0.5, 0.95, f'Taux d\'autofinancement: {taux:.2f}%', transform=ax.transAxes, ha='center', va='top', bbox=dict(facecolor='white', alpha=0.8))
+            
+            ax.set_ylabel('Montant (€)')
+            #ax.set_title('Analyse d\'Autofinancement')
+            self.canvas.draw()
+
+
+
+
     def export_to_pdf(self):
         """Export the current results to PDF"""
         filepath, _ = QFileDialog.getSaveFileName(
@@ -610,12 +648,10 @@ class AutofinancementCalculator(QMainWindow):
             <li>Le taux d'Autofinancement</li>
         </ul>
         <br>
-        <p>Développé pour :</p>
-        <p>Les étudiants en gestion/comptabilité<br>
-        Les responsables financiers<br>
-        Les PME et startups</p>
+        <p>Développé par :</p>
+        <p>NEDJAR Nassim & DJAFERCHERIF Soumia<br>    
         <br>
-        <p>© 2023 Tous droits réservés</p>
+        <p>© 2025 Tous droits réservés</p>
         </center>
         """
         QMessageBox.about(self, "À propos", about_text)
