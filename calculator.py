@@ -44,11 +44,11 @@ class AutofinancementCalculator(QMainWindow):
         import_buttons = QHBoxLayout()
         self.import_csv = QPushButton("Importer CSV")
         self.import_csv.setObjectName("importButton")
-        self.import_csv.setIcon(QIcon("assets/import_icon.png"))
+        self.import_csv.clicked.connect(self.import_csv_data)
         
         self.import_excel = QPushButton("Importer Excel")
         self.import_excel.setObjectName("importButton")
-        self.import_excel.setIcon(QIcon("assets/import_icon.png"))
+        self.import_excel.clicked.connect(self.import_xlsx_data)
         
         import_buttons.addWidget(self.import_csv)
         import_buttons.addWidget(self.import_excel)
@@ -136,7 +136,7 @@ class AutofinancementCalculator(QMainWindow):
         results_layout.addLayout(key_results)
         
         # Chart visualization
-        self.figure = Figure(figsize=(4, 5), dpi=100)
+        self.figure = Figure(figsize=(3, 4), dpi=100)
         self.canvas = FigureCanvas(self.figure)
         
         chart_box = QFrame()
@@ -148,10 +148,18 @@ class AutofinancementCalculator(QMainWindow):
         chart_layout.addWidget(chart_title)
         chart_layout.addWidget(self.canvas)
         
+        export_container = QFrame()
+        export_layout = QHBoxLayout(export_container)
+        export_layout.setContentsMargins(0, 10, 0, 0)  # Espacement supérieur
+
         self.export_btn = QPushButton("Exporter en PDF")
         self.export_btn.setObjectName("exportButton")
-        self.export_btn.setIcon(QIcon("assets/export_icon.png"))
-        chart_layout.addWidget(self.export_btn)
+        #self.export_btn.setIcon(QIcon("assets/export_icon.png"))
+        self.export_btn.setFixedSize(180, 60)
+        export_layout.addWidget(self.export_btn, alignment=Qt.AlignCenter)
+
+
+        chart_layout.addWidget(export_container)
         
         results_layout.addWidget(chart_box)
         main_layout.addWidget(results_frame)
@@ -164,6 +172,113 @@ class AutofinancementCalculator(QMainWindow):
         
         # Initial calculation
         self.calculate()
+    
+    def import_csv_data(self):
+        """Importe un fichier CSV avec le format exact spécifié"""
+        filepath, _ = QFileDialog.getOpenFileName(
+            self,
+            "Importer un fichier financier",
+            "",
+            "Fichiers CSV (*.csv)"
+        )
+        
+        if not filepath:
+            return
+        
+        try:
+            # Lecture du CSV avec encoding UTF-8 et vérification du format
+            df = pd.read_csv(filepath, encoding='utf-8')
+            
+            # Vérification des colonnes obligatoires
+            if not all(col in df.columns for col in ['Élément', 'Montant']):
+                raise ValueError("Format de fichier invalide. Colonnes requises: 'Élément', 'Montant'")
+            
+            # Conversion en dictionnaire {Élément: Montant}
+            data = dict(zip(df['Élément'], df['Montant']))
+            
+            # Mapping exact vers les champs du tableau
+            field_mapping = [
+                "Résultat Net",
+                "Dotations aux amortissements",
+                "Variation des stocks",
+                "Variation des créances clients",
+                "Variation des dettes fournisseurs",
+                "Autres produits encaissables",
+                "Autres charges décaissables",
+                "Dividendes versés",
+                "Investissements",
+                "Désinvestissements"
+            ]
+            
+            # Mise à jour de l'interface
+            for row in range(self.input_table.rowCount()):
+                field_name = self.input_table.item(row, 0).text()
+                if field_name in data:
+                    value = str(data[field_name])
+                    item = QTableWidgetItem(value)
+                    item.setTextAlignment(Qt.AlignCenter)
+
+                    self.input_table.setItem(row, 1, item)
+            
+            # Rafraîchissement de l'UI
+            self.input_table.viewport().update()
+            QMessageBox.information(self, "Succès", "Données importées avec succès!")
+            
+        except Exception as e:
+            QMessageBox.critical(self, "Erreur d'importation", 
+                f"Le fichier doit respecter exactement ce format:\n\n"
+                f"Élément,Montant\n"
+                f"Résultat Net,150000\n"
+                f"Dotations aux amortissements,50000\n"
+                f"...\n\n"
+                f"Erreur technique: {str(e)}"
+            )
+
+
+    def import_xlsx_data(self):
+        filepath, _ = QFileDialog.getOpenFileName(
+        self,
+        "Import Excel File",
+        "",
+        "Excel Files (*.xlsx *.xls)"
+         )
+        
+        if not filepath:
+            return
+        
+        try:
+            # Read Excel (first sheet only)
+            df = pd.read_excel(filepath)
+            
+            # Verify required columns exist
+            if not {'Élément', 'Montant'}.issubset(df.columns):
+                raise ValueError("File must contain 'Élément' and 'Montant' columns")
+            
+            # Update the table
+            for _, row in df.iterrows():
+                element = str(row['Élément']).strip()
+                amount = str(row['Montant'])  # Keep as simple string
+                
+                # Find matching row in table
+                for table_row in range(self.input_table.rowCount()):
+                    if self.input_table.item(table_row, 0).text() == element:
+                        item = QTableWidgetItem(amount)
+                        item.setTextAlignment(Qt.AlignCenter)
+                        self.input_table.setItem(table_row, 1, item)
+                        break
+            
+            QMessageBox.information(self, "Succès", "Données importées avec succès!")
+            
+        except Exception as e:
+            QMessageBox.critical(self, "Erreur d'importation", 
+                f"Le fichier doit respecter exactement ce format:\n\n"
+                f"Élément,Montant\n"
+                f"Résultat Net,150000\n"
+                f"Dotations aux amortissements,50000\n"
+                f"...\n\n"
+                f"Erreur technique: {str(e)}"
+            )
+
     
     def setup_menubar(self):
         menubar = self.menuBar()
@@ -225,6 +340,8 @@ class AutofinancementCalculator(QMainWindow):
             element = self.input_table.item(row, 0).text()
             if element in sample_values:
                 self.input_table.item(row, 1).setText(sample_values[element])
+                self.input_table.item(row, 1).setTextAlignment(Qt.AlignCenter)  # Center alignment
+
     
     def import_csv_triggered(self):
         filepath, _ = QFileDialog.getOpenFileName(
@@ -285,6 +402,8 @@ class AutofinancementCalculator(QMainWindow):
                     if self.input_table.item(row_idx, 0).text() == element_name:
                         self.input_table.item(row_idx, 1).setText(value)
                         break
+        self.input_table.viewport().update()
+        print("Table updated!")  # Debug
     
     def add_recent_file(self, filepath):
         """Add file to recent files list and update menu"""
@@ -521,7 +640,7 @@ class AutofinancementCalculator(QMainWindow):
             try:
                 # Save chart temporarily
                 chart_path = "temp_chart.png"
-                self.figure.savefig(chart_path, bbox_inches='tight', dpi=300)
+                self.figure.savefig(chart_path, bbox_inches='tight', dpi=150)
                 
                 # Create PDF
                 printer = QPrinter(QPrinter.HighResolution)
