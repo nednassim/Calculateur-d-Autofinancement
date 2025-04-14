@@ -52,9 +52,9 @@ Outil professionnel pour l'analyse financière des entreprises permettant de cal
 1. Télécharger le projet :
 
 
-   `git clone https://github.com/votreutilisateur/calculateur-autofinancement.git`
+   `git clone https://github.com/nedassim/Calculateur-d-Autofinancement.git`
 
-   `cd calculateur-autofinancement`
+   `cd Calculateur-d-Autofinancement`
 
 2. Installer les dépendances :
    `pip install -r requirements.txt`
