@@ -105,12 +105,12 @@ class AutofinancementCalculator(QMainWindow):
         
         self.caf_label = QLabel("Capacité d'Autofinancement (CAF)")
         self.caf_label.setObjectName("resultLabel")
-        self.caf_value = QLabel("0 €")
+        self.caf_value = QLabel("0 DZD")
         self.caf_value.setObjectName("resultValue")
         
         self.autofinancement_label = QLabel("Autofinancement")
         self.autofinancement_label.setObjectName("resultLabel")
-        self.autofinancement_value = QLabel("0 €")
+        self.autofinancement_value = QLabel("0 DZD")
         self.autofinancement_value.setObjectName("resultValue")
         
         self.taux_label = QLabel("Taux d'Autofinancement")
@@ -493,8 +493,8 @@ class AutofinancementCalculator(QMainWindow):
             taux = (autofinancement / investissements_net) * 100 if investissements_net != 0 else 0
             
             # Update UI
-            self.caf_value.setText(f"{caf:,.2f} €")
-            self.autofinancement_value.setText(f"{autofinancement:,.2f} €")
+            self.caf_value.setText(f"{caf:,.2f} DZD")
+            self.autofinancement_value.setText(f"{autofinancement:,.2f} DZD")
             self.taux_value.setText(f"{taux:,.2f} %")
             
             # Update interpretation
@@ -516,12 +516,12 @@ class AutofinancementCalculator(QMainWindow):
         # CAF analysis
         if caf > 0:
             interpretations.append(
-                f"L'entreprise dégage une capacité d'autofinancement positive de {caf:,.2f}€, "
+                f"L'entreprise dégage une capacité d'autofinancement positive de {caf:,.2f}DZD, "
                 "indiquant qu'elle génère des ressources internes suffisantes."
             )
         else:
             interpretations.append(
-                f"Alerte: La CAF est négative ({caf:,.2f}€), ce qui signifie que l'entreprise "
+                f"Alerte: La CAF est négative ({caf:,.2f}DZD), ce qui signifie que l'entreprise "
                 "ne génère pas suffisamment de ressources internes."
             )
         
@@ -585,13 +585,13 @@ class AutofinancementCalculator(QMainWindow):
         bars = ax.bar(labels, values, color=colors)
         
         # Formatage des valeurs
-        ax.yaxis.set_major_formatter('€{x:,.0f}')
+        ax.yaxis.set_major_formatter('DZD{x:,.0f}')
         
         # Ajout des valeurs sur les barres
         for bar in bars:
             height = bar.get_height()
             ax.text(bar.get_x() + bar.get_width()/2., height,
-            f'€{height:,.0f}',
+            f'DZD{height:,.0f}',
             ha='center', va='bottom',
             fontsize=10)
         
@@ -618,7 +618,7 @@ class AutofinancementCalculator(QMainWindow):
         for bar in bars:
             height = bar.get_height()
             ax.text(bar.get_x() + bar.get_width()/2., height,
-                    f'{height:,.2f}€',
+                    f'{height:,.2f}DZD',
                     ha='center', va='bottom')
             
             # Add taux as text
