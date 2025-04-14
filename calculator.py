@@ -58,7 +58,7 @@ class AutofinancementCalculator(QMainWindow):
         # Input table
         self.input_table = QTableWidget()
         self.input_table.setColumnCount(2)
-        self.input_table.setHorizontalHeaderLabels(["Élément", "Montant (€)"])
+        self.input_table.setHorizontalHeaderLabels(["Élément", "Montant (DZD)"])
         self.input_table.setRowCount(10)
         self.input_table.setMinimumHeight(250)  # Hauteur minimale en pixels
         #self.input_table.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
@@ -624,7 +624,7 @@ class AutofinancementCalculator(QMainWindow):
             # Add taux as text
             #ax.text(0.5, 0.95, f'Taux d\'autofinancement: {taux:.2f}%', transform=ax.transAxes, ha='center', va='top', bbox=dict(facecolor='white', alpha=0.8))
             
-            ax.set_ylabel('Montant (€)')
+            ax.set_ylabel('Montant (DZD)')
             #ax.set_title('Analyse d\'Autofinancement')
             self.canvas.draw()
 
