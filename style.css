@@ -1,72 +1,80 @@
+/* Base Styles */
 QMainWindow {
     background-color: #f5f5f5;
     font-family: 'Arial';
 }
 
+QScrollArea {
+    border: none;
+}
+
+/* Title */
 #title {
     font-size: 24px;
     font-weight: bold;
     color: #333;
-    margin-bottom: 10px;
+    padding: 10px;
+    text-align: center;
 }
 
-#inputFrame {
+/* Frames */
+#inputFrame, #resultsFrame {
     background-color: white;
-    border-radius: 6px;
-    padding: 20px;
+    border-radius: 8px;
+    padding: 15px;
     border: 1px solid #ddd;
+}
+
+/* Buttons */
+#calculateButton {
+    background-color: #4CAF50;
+    color: white;
+    padding: 12px 24px;
+    border-radius: 6px;
+    font-size: 16px;
+    min-width: 150px;
+    border: none;
 }
 
 #importButton {
     background-color: #2196F3;
     color: white;
-    border: none;
     padding: 8px 16px;
     border-radius: 6px;
     font-size: 14px;
+    border: none;
 }
 
-#importButton:hover {
-    background-color: #0b7dda;
+#exportButton {
+    background-color: #ff9800;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 14px;
+    border: none;
 }
 
+/* Table */
 QTableWidget {
     border: 1px solid #ddd;
     border-radius: 4px;
     font-size: 14px;
-}
-
-QTableWidget QHeaderView::section {
-    background-color: #f0f0f0;
-    padding: 5px;
-    border: none;
+    gridline-color: #eee;
+    min-width: 400px;
 }
 
 QTableWidget::item {
     padding: 5px;
 }
 
-#calculateButton {
-    background-color: #4CAF50;
-    color: white;
+QTableWidget QHeaderView::section {
+    background-color: #f0f0f0;
+    padding: 8px;
     border: none;
-    padding: 12px 24px;
-    border-radius: 6px;
-    font-weight: bold;
-    font-size: 16px;
+    font-size: 14px;
 }
 
-#calculateButton:hover {
-    background-color: #45a049;
-}
-
-#resultsFrame {
-    background-color: white;
-    border-radius: 6px;
-    padding: 20px;
-    border: 1px solid #ddd;
-}
-
+/* Results */
 #resultLabel {
     color: #777;
     font-size: 14px;
@@ -77,7 +85,7 @@ QTableWidget::item {
     font-size: 18px;
     font-weight: bold;
     color: #2196F3;
-    margin-bottom: 15px;
+    margin-bottom: 10px;
 }
 
 #interpretationText {
@@ -89,67 +97,33 @@ QTableWidget::item {
     border-left: 4px solid #2196F3;
 }
 
+/* Chart */
 #chartBox {
     border-left: 1px solid #ddd;
-    padding-left: 20px;
+    min-width: 300px;
 }
 
-#chartTitle {
-    font-size: 18px;
-    font-weight: bold;
-    color: #333;
-    margin-bottom: 15px;
-}
-
-#exportButton {
-    background-color: #ff9800;
-    color: white;
-    border: none;
-    padding: 8px 16px;
-    border-radius: 8px;
-    font-size: 14px;
-    margin-top: 15px;
-}
-
-#exportButton:hover {
-    background-color: #e68a00;
-    font-weight: bold;
-}
-
-QMenuBar {
-    background-color: #f0f0f0;
-    padding: 2px;
-}
-
-QMenuBar::item {
-    padding: 5px 10px;
-    background: transparent;
-}
-
-QMenuBar::item:selected {
-    background: #ddd;
-}
-
-QMenu {
-    background-color: white;
-    border: 1px solid #ccc;
-}
-
-QMenu::item:selected {
-    background-color: #2196F3;
-    color: white;
-}
-
-QStatusBar {
-    background-color: #f0f0f0;
-    border-top: 1px solid #ddd;
-}
-
-/* Dans votre style.css */
 FigureCanvas {
     background: white;
     border-radius: 8px;
     border: 1px solid #e0e0e0;
-    padding: 10px;
-    margin: 5px;
+    min-height: 250px;
+}
+
+/* Responsive Adjustments */
+@media screen and (max-width: 900px) {
+    #chartBox {
+        border-left: none;
+        border-top: 1px solid #ddd;
+        padding-top: 15px;
+        margin-top: 15px;
+    }
+    
+    QTableWidget {
+        min-width: 300px;
+    }
+    
+    #title {
+        font-size: 20px;
+    }
 }

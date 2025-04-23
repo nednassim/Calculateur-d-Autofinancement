@@ -5,9 +5,12 @@ from calculator import AutofinancementCalculator
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     
-    # Load the stylesheet
-    with open("style.css", "r") as f:
-        app.setStyleSheet(f.read())
+    # Load stylesheet
+    try:
+        with open("style.css", "r") as f:
+            app.setStyleSheet(f.read())
+    except Exception as e:
+        print(f"Could not load stylesheet: {e}")
     
     calculator = AutofinancementCalculator()
     calculator.show()
