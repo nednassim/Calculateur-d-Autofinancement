@@ -1,14 +1,15 @@
 import sys
 from datetime import datetime
+import traceback
 import pandas as pd
 from PySide6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLabel,
     QPushButton, QFrame, QTableWidget, QTableWidgetItem,
     QFileDialog, QMessageBox, QScrollArea, QHeaderView,
-    QSizePolicy, QApplication
+    QSizePolicy, QLineEdit
 )
-from PySide6.QtCore import Qt
-from PySide6.QtGui import QTextDocument
+from PySide6.QtCore import Qt, QSize
+from PySide6.QtGui import QTextDocument, QDoubleValidator
 from PySide6.QtPrintSupport import QPrinter
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
@@ -46,10 +47,30 @@ class AutofinancementCalculator(QMainWindow):
         input_frame = self.create_input_frame()
         main_layout.addWidget(input_frame)
         
+        # Dividend input section
+        dividend_frame = QFrame()
+        dividend_layout = QHBoxLayout(dividend_frame)
+        dividend_layout.setContentsMargins(0, 10, 0, 10)
+        
+        dividend_label = QLabel("Dividendes (Compte 457):")
+        dividend_label.setObjectName("dividendLabel")
+        dividend_label.setStyleSheet("font-size: 14px; padding: 5px;") 
+
+        
+        self.dividend_input = QLineEdit()
+        self.dividend_input.setObjectName("dividendInput")
+        self.dividend_input.setStyleSheet("font-size: 14px; padding: 5px;") 
+        self.dividend_input.setPlaceholderText("Entrez le montant...")
+        self.dividend_input.setValidator(QDoubleValidator())
+        
+        dividend_layout.addWidget(dividend_label)
+        dividend_layout.addWidget(self.dividend_input, stretch=1)
+        main_layout.addWidget(dividend_frame)
+        
         # Calculate button
         self.calculate_btn = QPushButton("Calculer")
         self.calculate_btn.setObjectName("calculateButton")
-        self.calculate_btn.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        self.calculate_btn.setFixedSize(200, 50)
         main_layout.addWidget(self.calculate_btn, alignment=Qt.AlignCenter)
         
         # Results section
@@ -63,66 +84,57 @@ class AutofinancementCalculator(QMainWindow):
         frame = QFrame()
         frame.setObjectName("inputFrame")
         frame.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        
+
         layout = QVBoxLayout(frame)
         layout.setContentsMargins(15, 15, 15, 15)
         layout.setSpacing(15)
+
+        # Button row
+        button_row = QHBoxLayout()
+        button_row.setSpacing(15)
         
-        # Import button
         self.import_excel = QPushButton("Importer Excel")
         self.import_excel.setObjectName("importButton")
+        self.import_excel.setFixedHeight(40)
         self.import_excel.clicked.connect(self.import_xlsx_data)
-        layout.addWidget(self.import_excel)
         
-        # Table with scroll
+        self.add_row_button = QPushButton("+ Ajouter une ligne")
+        self.add_row_button.setObjectName("addRowButton")
+        self.add_row_button.setFixedHeight(40)
+        self.add_row_button.clicked.connect(self.add_table_row)
+        
+        button_row.addWidget(self.import_excel)
+        button_row.addWidget(self.add_row_button)
+        layout.addLayout(button_row)
+
+        # Table
         table_scroll = QScrollArea()
         table_scroll.setWidgetResizable(True)
-        
+
         self.input_table = QTableWidget()
         self.setup_table()
-        
+
         table_scroll.setWidget(self.input_table)
         layout.addWidget(table_scroll)
-        
+
         return frame
     
+    def add_table_row(self):
+        row_position = self.input_table.rowCount()
+        self.input_table.insertRow(row_position)
+        self.input_table.setItem(row_position, 0, QTableWidgetItem(""))
+        self.input_table.setItem(row_position, 1, QTableWidgetItem(""))
+        self.input_table.setItem(row_position, 2, QTableWidgetItem("0"))
+
     def setup_table(self):
-        self.input_table.setColumnCount(2)
-        self.input_table.setHorizontalHeaderLabels(["Élément", "Montant (DZD)"])
-        self.input_table.setRowCount(20)
-        
-        elements = [
-            "Ventes et produits annexes",
-            "Variation stocks produits finis et en cours",
-            "Production immobilisée",
-            "Subventions d'exploitation",
-            "Achats consommés",
-            "Services extérieurs et autres consommations",
-            "Charges de personnel",
-            "Impôts, taxes et versements assimilés",
-            "Autres produits opérationnels",
-            "Autres charges opérationnelles",
-            "Dotations aux amortissements, provisions et pertes de valcur",
-            "Reprise sur pertes de valcur et provisions",
-            "Produits financiers",
-            "Charges financières",
-            "Impôts exigibles sur résultats ordinaires",
-            "Impôts différés (Variations) sur résultats ordinaires",
-            "Eléments extraordinaires (produits)",
-            "Eléments extraordinaires (charges)",
-            "Part dans les résultats nets des sociétés mises en équivalence",
-            "Dividendes versés"
-        ]
-        
-        for i, element in enumerate(elements):
-            self.input_table.setItem(i, 0, QTableWidgetItem(element))
-            self.input_table.setItem(i, 1, QTableWidgetItem("0"))
-            self.input_table.item(i, 0).setFlags(Qt.ItemIsEnabled)
-        
-        # Table sizing
+        self.input_table.setColumnCount(3)
+        self.input_table.setHorizontalHeaderLabels(["Libellé", "Compte", "Montant (DZD)"])
+        self.input_table.setRowCount(0)
+
         self.input_table.horizontalHeader().setSectionResizeMode(0, QHeaderView.Stretch)
         self.input_table.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeToContents)
-        self.input_table.verticalHeader().setDefaultSectionSize(30)
+        self.input_table.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeToContents)
+        self.input_table.verticalHeader().setDefaultSectionSize(40)
         self.input_table.verticalHeader().setSectionResizeMode(QHeaderView.Fixed)
     
     def create_results_frame(self):
@@ -216,112 +228,230 @@ class AutofinancementCalculator(QMainWindow):
             "",
             "Fichiers Excel (*.xlsx *.xls)"
         )
-        
+
         if not filepath:
             return
-        
+
         try:
-            df = pd.read_excel(filepath)
+            # Lire le fichier Excel
+            try:
+                df = pd.read_excel(filepath, engine='openpyxl')
+            except:
+                df = pd.read_excel(filepath, engine='xlrd')
+
+            # Normaliser les noms de colonnes
+            df.columns = [str(col).strip().lower() for col in df.columns]
             
-            # Normalize column names
-            df.columns = [col.strip().lower().replace('é', 'e').replace('è', 'e') for col in df.columns]
+            # Détection des colonnes
+            compte_col = next((col for col in df.columns if 'compte' in col or 'numéro' in col or 'numero' in col), None)
+            montant_col = next((col for col in df.columns if 'montant' in col or 'valeur' in col), None)
+            libelle_col = next((col for col in df.columns if 'libellé' in col or 'libelle' in col or 'désignation' in col), None)
+
+            if not compte_col or not montant_col:
+                raise ValueError("Colonnes requises non trouvées: besoin d'une colonne 'compte' et 'montant'")
+
+            # Filtrer les lignes valides (où le compte n'est pas NaN et est un string non vide)
+            df = df[pd.notna(df[compte_col]) & (df[compte_col].astype(str).str.strip() != '')].copy()
             
-            if not all(col in df.columns for col in ['libelle', 'montant']):
-                raise ValueError("Colonnes requises: 'Libellé' et 'Montant'")
-            
-            data = {}
+            # Vider le tableau avant l'import
+            self.input_table.setRowCount(0)
+
+            # Traitement des lignes valides
+            valid_rows = 0
             for _, row in df.iterrows():
-                element = str(row['libelle']).strip()
-                if not element or element in data:
-                    continue
                 try:
-                    value = float(row['montant'])
-                    data[element] = value
-                except (ValueError, KeyError):
+                    compte = str(row[compte_col]).strip()
+                    if not compte:  # Si le compte est une string vide
+                        continue
+                        
+                    libelle = str(row[libelle_col]).strip() if libelle_col and pd.notna(row.get(libelle_col)) else ""
+                    
+                    try:
+                        montant = float(str(row[montant_col]).replace(',', '')) if pd.notna(row[montant_col]) else 0.0
+                    except ValueError:
+                        montant = 0.0
+
+                    current_row = self.input_table.rowCount()
+                    self.input_table.insertRow(current_row)
+                    self.input_table.setItem(current_row, 0, QTableWidgetItem(libelle))
+                    self.input_table.setItem(current_row, 1, QTableWidgetItem(compte))
+                    self.input_table.setItem(current_row, 2, QTableWidgetItem(f"{montant:,.2f}"))
+                    valid_rows += 1
+
+                except Exception as e:
+                    print(f"Ignoring row due to error: {e}")
                     continue
+
+            QMessageBox.information(
+                self, 
+                "Succès", 
+                f"Import terminé.\n"
+                f"- Lignes valides importées: {valid_rows}"
+            )
             
-            # Update table while maintaining size
-            for row in range(self.input_table.rowCount()):
-                element = self.input_table.item(row, 0).text()
-                matching_key = None
-                for key in data.keys():
-                    if element.lower().strip() == key.lower().strip():
-                        matching_key = key
-                        break
-                
-                if matching_key:
-                    self.input_table.setItem(row, 1, QTableWidgetItem(str(data[matching_key])))
-            
-            QMessageBox.information(self, "Succès", "Données importées avec succès!")
-            
+            if valid_rows > 0:
+                self.calculate()
+
         except Exception as e:
-            QMessageBox.critical(self, "Erreur", f"Erreur d'importation:\n{str(e)}")
+            QMessageBox.critical(self, "Erreur", f"Erreur lors de l'importation :\n{str(e)}")
     
     def calculate(self):
         try:
-            values = {}
-            for row in range(self.input_table.rowCount()):
-                element = self.input_table.item(row, 0).text()
-                value = self.input_table.item(row, 1).text()
-                values[element] = float(value) if value else 0.0
-            
-            resultat_net = values["Part dans les résultats nets des sociétés mises en équivalence"]
+            # Initialisation des variables
+            resultat_net = 0.0
+            dotations = 0.0
+            valeur_cession = 0.0
+            reprises = 0.0
+            produits_cession = 0.0
+            subventions = 0.0
 
-            # Calculate results
-            caf = (
-                resultat_net +
-                values["Ventes et produits annexes"] -
-                values["Variation stocks produits finis et en cours"] -
-                values["Production immobilisée"] -
-                values["Subventions d'exploitation"] +
-                values["Achats consommés"] +
-                values["Services extérieurs et autres consommations"] +
-                values["Charges de personnel"] +
-                values["Impôts, taxes et versements assimilés"] -
-                values["Autres produits opérationnels"] +
-                values["Autres charges opérationnelles"] +
-                values["Dotations aux amortissements, provisions et pertes de valcur"] -
-                values["Reprise sur pertes de valcur et provisions"] -
-                values["Produits financiers"] +
-                values["Charges financières"] +
-                values["Impôts exigibles sur résultats ordinaires"] -
-                values["Impôts différés (Variations) sur résultats ordinaires"] -
-                values["Eléments extraordinaires (produits)"] +
-                values["Eléments extraordinaires (charges)"] 
-            )
+            # Fonction de conversion
+            def convert_montant(text):
+                try:
+                    text = str(text).strip().replace(' ', '').replace(',', '')
+                    return float(text) if text else 0.0
+                except:
+                    return 0.0
+
+            # Parcours du tableau
+            for row in range(self.input_table.rowCount()):
+                compte_item = self.input_table.item(row, 1)
+                montant_item = self.input_table.item(row, 2)
+
+                if not compte_item or not montant_item:
+                    continue
+
+                compte = compte_item.text().strip()
+                montant = convert_montant(montant_item.text())
+
+                # Logique de calcul
+                if compte.startswith('12'):
+                    resultat_net += montant
+                elif any(compte.startswith(c) for c in ['681', '686', '687']):
+                    dotations += montant
+                elif compte.startswith('675'):
+                    valeur_cession += montant
+                elif any(compte.startswith(c) for c in ['781', '786', '787']):
+                    reprises += montant
+                elif compte.startswith('775'):
+                    produits_cession += montant
+                elif compte.startswith('777'):
+                    subventions += montant
+
+            # Récupération des dividendes depuis le champ input
+            try:
+                dividendes = convert_montant(self.dividend_input.text())
+            except:
+                dividendes = 0.0
+
+            # Calculs finaux
+            caf = (resultat_net + dotations + valeur_cession - reprises - produits_cession - subventions)
+            autofinancement = caf - dividendes
+
+            # Formatage de l'affichage
+            def format_montant(value):
+                return f"{value:,.0f} DZD".replace(",", " ") if value == int(value) else f"{value:,.2f} DZD".replace(",", " ")
+
+            # Mise à jour de l'interface
+            self.resultat_net_value.setText(format_montant(resultat_net))
+            self.caf_value.setText(format_montant(caf))
+            self.autofinancement_value.setText(format_montant(autofinancement))
+            self.interpretation_value.setText(self.get_interpretation(resultat_net, caf, autofinancement, dividendes))
             
-            autofinancement = caf - values["Dividendes versés"]
-            
-            # Update UI
-            self.resultat_net_value.setText(f"{resultat_net:,.2f} DZD")
-            self.caf_value.setText(f"{caf:,.2f} DZD")
-            self.autofinancement_value.setText(f"{autofinancement:,.2f} DZD")
-            
-            self.interpretation_value.setText(self.get_interpretation(resultat_net, caf, autofinancement))
             self.update_chart(resultat_net, caf, autofinancement)
-            
+
         except Exception as e:
-            QMessageBox.warning(self, "Erreur", f"Erreur de calcul:\n{str(e)}")
+            QMessageBox.critical(self, "Erreur", f"Erreur de calcul:\n{str(e)}")
+            print(f"Erreur complète:\n{traceback.format_exc()}")
     
-    def get_interpretation(self, resultat_net, caf, autofinancement):
+
+    def get_interpretation(self, resultat_net, caf, autofinancement, dividendes):
         interpretations = []
         
+        # Analyse du résultat net
         if resultat_net > 0:
-            interpretations.append(f"Résultat net positif: {resultat_net:,.2f} DZD")
+            interpretations.append(
+                "🔹 <b>Résultat Net Positif</b> ({} DZD):\n"
+                "L'entreprise dégage un bénéfice. Cela indique que les produits dépassent les charges, "
+                "ce qui est un signe de bonne santé financière à court terme.".format(f"{resultat_net:,.2f}")
+            )
         else:
-            interpretations.append(f"Résultat net négatif: {resultat_net:,.2f} DZD")
+            interpretations.append(
+                "🔹 <b>Résultat Net Négatif</b> ({} DZD):\n"
+                "L'entreprise est en situation de perte. Cela peut être préoccupant si la tendance persiste, "
+                "mais peut être normal pour une entreprise en phase d'investissement ou de démarrage.".format(f"{resultat_net:,.2f}")
+            )
+        
+        # Analyse de la CAF
+        if caf > resultat_net:
+            cash_info = "La CAF est supérieure au résultat net, ce qui est normal car elle inclut les dotations non décaissables."
+        elif caf == resultat_net:
+            cash_info = "La CAF est égale au résultat net, ce qui est rare et peut indiquer l'absence de dotations."
+        else:
+            cash_info = "La CAF est inférieure au résultat net, situation atypique qui mérite investigation."
         
         if caf > 0:
-            interpretations.append(f"CAF positive: {caf:,.2f} DZD")
+            interpretations.append(
+                "🔹 <b>CAF Positive</b> ({} DZD):\n"
+                "L'entreprise génère des liquidités internes suffisantes pour:\n"
+                "- Financer ses investissements\n"
+                "- Rembourser ses dettes\n"
+                "- Payer des dividendes\n{}".format(f"{caf:,.2f}", cash_info)
+            )
         else:
-            interpretations.append(f"CAF négative: {caf:,.2f} DZD")
+            interpretations.append(
+                "🔹 <b>CAF Négative</b> ({} DZD):\n"
+                "Attention! L'entreprise ne génère pas assez de cash flow interne.\n"
+                "Cela peut entraîner:\n"
+                "- Des difficultés de trésorerie\n"
+                "- Une dépendance accrue au financement externe\n"
+                "- Des risques de cessation de paiement".format(f"{caf:,.2f}")
+            )
         
+        # Analyse de l'autofinancement
         if autofinancement > 0:
-            interpretations.append(f"Autofinancement positif: {autofinancement:,.2f} DZD")
+            if dividendes > 0:
+                dividend_info = (
+                    "L'entreprise peut à la fois:\n"
+                    "- Financer sa croissance ({:,.2f} DZD disponibles)\n"
+                    "- Récompenser ses actionnaires ({:,.2f} DZD de dividendes)".format(autofinancement, dividendes)
+                )
+            else:
+                dividend_info = "L'entreprise conserve toutes ses ressources pour financer son développement."
+            
+            interpretations.append(
+                "🔹 <b>Autofinancement Positif</b> ({} DZD):\n"
+                "Situation très favorable. {}\n"
+                "La politique de dividendes semble soutenable.".format(f"{autofinancement:,.2f}", dividend_info)
+            )
         else:
-            interpretations.append(f"Autofinancement négatif: {autofinancement:,.2f} DZD")
+            interpretations.append(
+                "🔹 <b>Autofinancement Négatif</b> ({} DZD):\n"
+                "Situation risquée! L'entreprise distribue plus de dividendes ({:,.2f} DZD) "
+                "qu'elle ne génère de CAF.\n"
+                "Cela peut conduire à:\n"
+                "- Un endettement excessif\n"
+                "- Une réduction des investissements\n"
+                "- A terme, une baisse de compétitivité".format(f"{autofinancement:,.2f}", dividendes)
+            )
         
-        return "\n\n".join(interpretations)
+        # Recommandations globales
+        recommendations = []
+        if autofinancement < 0:
+            recommendations.append(
+                "🚩 <b>Recommandation urgente</b>: Réviser la politique de dividendes à la baisse "
+                "ou trouver des sources de financement externes."
+            )
+        elif caf < resultat_net:
+            recommendations.append(
+                "🔍 <b>Vérifier</b>: La composition de la CAF pour comprendre pourquoi elle est inférieure au résultat net."
+            )
+        
+        if recommendations:
+            interpretations.append("\n<b>RECOMMANDATIONS:</b>\n" + "\n".join(recommendations))
+        
+        return "<br>".join(interpretations).replace("\n", "<br>")
+
     
     def update_chart(self, resultat_net, caf, autofinancement):
         self.figure.clear()

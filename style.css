@@ -36,13 +36,21 @@ QScrollArea {
     border: none;
 }
 
-#importButton {
+#calculateButton:hover {
+    background-color: #45a049;
+}
+
+#importButton, #addRowButton {
     background-color: #2196F3;
     color: white;
     padding: 8px 16px;
     border-radius: 6px;
     font-size: 14px;
     border: none;
+}
+
+#importButton:hover, #addRowButton:hover {
+    background-color: #0b7dda;
 }
 
 #exportButton {
@@ -54,13 +62,16 @@ QScrollArea {
     border: none;
 }
 
+#exportButton:hover {
+    background-color: #e68a00;
+}
+
 /* Table */
 QTableWidget {
     border: 1px solid #ddd;
     border-radius: 4px;
     font-size: 14px;
     gridline-color: #eee;
-    min-width: 400px;
 }
 
 QTableWidget::item {
@@ -99,7 +110,6 @@ QTableWidget QHeaderView::section {
 
 /* Chart */
 #chartBox {
-    border-left: 1px solid #ddd;
     min-width: 300px;
 }
 
@@ -107,11 +117,14 @@ FigureCanvas {
     background: white;
     border-radius: 8px;
     border: 1px solid #e0e0e0;
-    min-height: 250px;
 }
 
 /* Responsive Adjustments */
 @media screen and (max-width: 900px) {
+    #resultsFrame QHBoxLayout {
+        flex-direction: column;
+    }
+    
     #chartBox {
         border-left: none;
         border-top: 1px solid #ddd;
@@ -119,11 +132,73 @@ FigureCanvas {
         margin-top: 15px;
     }
     
+    #title {
+        font-size: 20px;
+    }
+    
+    #calculateButton {
+        padding: 10px 20px;
+        font-size: 14px;
+    }
+    
+    #inputFrame, #resultsFrame {
+        padding: 10px;
+    }
+}
+
+@media screen and (max-width: 600px) {
     QTableWidget {
-        min-width: 300px;
+        font-size: 12px;
+    }
+    
+    QTableWidget QHeaderView::section {
+        font-size: 12px;
+        padding: 5px;
+    }
+    
+    #resultLabel, #interpretationText {
+        font-size: 12px;
+    }
+    
+    #resultValue {
+        font-size: 16px;
     }
     
     #title {
-        font-size: 20px;
+        font-size: 18px;
+    }
+}
+
+/* Styles pour le champ Dividendes */
+#dividendLabel {
+    font-size: 14px;
+    color: #555;
+    font-weight: bold;
+    min-width: 180px;
+}
+
+#dividendInput {
+    font-size: 14px;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background-color: white;
+}
+
+#dividendInput:focus {
+    border-color: #2196F3;
+    outline: none;
+}
+
+/* Responsive adjustments */
+@media screen and (max-width: 600px) {
+    #dividendLabel {
+        min-width: 120px;
+        font-size: 12px;
+    }
+    
+    #dividendInput {
+        font-size: 12px;
+        padding: 6px;
     }
 }
